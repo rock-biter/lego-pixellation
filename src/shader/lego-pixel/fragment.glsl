@@ -1,8 +1,15 @@
+
 varying vec2 vUv;
 uniform sampler2D uLegoTexture;
+uniform sampler2D uAvatarTexture;
 uniform float uSubdivision;
+uniform float uLightAngle;
 
 float PI2 = 6.28318530718;
+
+float rand(vec2 co) {
+    return fract(sin(dot(co, vec2(12.9898, 78.233))) * 43758.5453);
+}
 
 vec3 sdgCircle( in vec2 p, in float r ) 
 {
@@ -109,54 +116,101 @@ vec3 charG(in vec2 p, in vec2 a, in vec2 b, in float r) {
   return vec3(char) - r;
 }
 
+float lego(in vec2 uv, in vec2 l1, in vec2 l2, in vec2 l3, in vec2 e1, in vec2 e2, in vec2 e3, in vec2 g1, in vec2 g2, in vec2 o1, in vec2 o2, in float w, in float r  ) {
+  float letterL = charL(uv, l1, l2, l3, w).r;
+  float letterE = charE(uv, e1, e2, e3, w).r;
+  float letterG = charG(uv, g1, g2, w).r;
+  float letterO = charO(uv, o1, o2, r).r;
+
+  float word = min(min(letterL, letterE), min(letterG,letterO - w));
+
+  return word;
+}
+
 
 void main() {
   vec3 map = texture2D(uLegoTexture, vUv).rgb;
+  vec3 avatar = texture2D(uAvatarTexture, vUv).rgb;
 
+  float pixelSizeX = fwidth(vUv.x);
+  float pixelSizeY = fwidth(vUv.y);
 
-  vec2 uvMap = floor(vUv * uSubdivision ) / uSubdivision + 0.5 / uSubdivision;
-  vec3 pixelColor = texture2D(uLegoTexture, uvMap).rgb;
+  vec2 uvOffset = vec2(pixelSizeX, pixelSizeY);
+
+  vec2 uvMap = floor(vUv * uSubdivision ) / uSubdivision + 0.1 / uSubdivision;
+  vec3 pixelColor = texture2D(uAvatarTexture, uvMap).rgb;
   vec2 uv = fract(vUv * uSubdivision) * 2.0 - 1.0;
   vec3 color = vec3(1.0, 1.0, 1.0);
 
   // shadow
-  float tLine = sdSegment(uv, vec2(0, 0), vec2(-0.15, 0.15));
+  vec2 lightDirection = rotate2D(vec2(1., 0.0), uLightAngle);
+  float tLine = sdSegment(uv, vec2(0, 0), lightDirection * 0.2);
   float lt = smoothstep(-0.01, 0.02, tLine - 0.63);
   vec3 shadowColor = mix(vec3(0.3), color, pow(lt,0.5));
   shadowColor += smoothstep(0.0, -0.0,sdgCircle(uv, 0.62).x);
 
+  vec3 light = vec3(0);
+
   // square
   float tBox = sdgBox(uv, vec2(.93)).x;
   float bt = smoothstep(0.0, -0.05, tBox - 0.07);
-  vec3 boxColor = mix(vec3(0.3), color, pow(bt,0.5));
+  vec3 boxColor = mix(vec3(0.2), color, pow(bt,0.5));
+
+  float rtb = smoothstep(0.0, -0.07, tBox - 0.07);
+  rtb *= smoothstep(-0.3, 0., sdgBox(uv - lightDirection * 0.03, vec2(1.1)).x - 0.07);
+  light += vec3(1.,1.,1.) * pow(abs(rtb), 3.) * 5.;
+  // pixelColor *= clamp(0.0,1.0,1. - (tBox - 0.07));
+
+  
 
   // circle
   float tCircle = sdgCircle(uv, 0.62).x;
   float ct = smoothstep(0.0, 0.02, tCircle);
   ct += smoothstep(0.0, -0.05, tCircle);
   vec3 circleColor = mix(vec3(0.3), color, pow(ct,0.5));
-
   color = min(boxColor, circleColor);
+
+  // riflessi circle
+  float rtc = smoothstep(0.0, -0.05, tCircle);
+  rtc *= smoothstep(-0.3, 0., sdgCircle(uv - lightDirection * 0.08, 0.85).x);
+  light += vec3(1.,1.,1.) * pow(rtc, 2.) * 3.;
 
   color = min(color, shadowColor);
 
   // letter L
-  float letterL = charL(uv, vec2(-0.357,0.215), vec2(-0.452,-0.205), vec2(-0.31,-0.205), 0.013).r;
-  float letterE = charE(uv, vec2(-0.138,0.215), vec2(-0.232,-0.205), vec2(-0.08,-0.205), 0.013).r;
-  float letterO = charO(uv, vec2(0.39, 0.15), vec2(0.325, -0.135), 0.068).r;
-  float letterG = charG(uv, vec2(0.15,0.15), vec2(0.085,-0.135), 0.013).r;
+  // float letterL = charL(uv, vec2(-0.357,0.215), vec2(-0.452,-0.205), vec2(-0.31,-0.205), 0.013).r;
+  // float letterE = charE(uv, vec2(-0.138,0.215), vec2(-0.232,-0.205), vec2(-0.08,-0.205), 0.013).r;
+  // float letterO = charO(uv, vec2(0.39, 0.15), vec2(0.325, -0.135), 0.068).r;
+  // float letterG = charG(uv, vec2(0.15,0.15), vec2(0.085,-0.135), 0.013).r;
 
-  float word = min(min(letterL, letterE), min(letterG,letterO - 0.013));
+  float word = lego(uv, vec2(-0.357,0.215), vec2(-0.452,-0.205), vec2(-0.31,-0.205), vec2(-0.138,0.215), vec2(-0.232,-0.205), vec2(-0.08,-0.205),vec2(0.15,0.15), vec2(0.085,-0.135),vec2(0.39, 0.15), vec2(0.325, -0.135), 0.013, 0.068);
   float lw = smoothstep(0.0, 0.01, word);
   lw += smoothstep(0.0, -0.03, word);
   // color = mix(vec3(1.), vec3(0.0), ltL);
-  color = mix(vec3(0.6), color, pow(lw,0.3));
+  color = mix(vec3(0.6), color, pow(lw,0.5));
+
+
+  // float rw = lego(uv, vec2(-0.357,0.215), vec2(-0.452,-0.205), vec2(-0.31,-0.205), vec2(-0.138,0.215), vec2(-0.232,-0.205), vec2(-0.08,-0.205),vec2(0.15,0.15), vec2(0.085,-0.135),vec2(0.39, 0.15), vec2(0.325, -0.135), 0.013, 0.068) * 0.2;
+
+  vec2 lOffest = cross(vec3(rotate2D(lightDirection, PI2 * -0.05),0.0),vec3(0.0,0.0,1.0)).xy * 0.015;
+  float rw = lego(uv, vec2(-0.357,0.215) + lOffest, vec2(-0.452,-0.205) + lOffest, vec2(-0.31,-0.205) + lOffest, vec2(-0.138,0.215) + lOffest, vec2(-0.232,-0.205) + lOffest, vec2(-0.08,-0.205) + lOffest,vec2(0.15,0.15) + lOffest, vec2(0.085,-0.135) + lOffest,vec2(0.39, 0.15) + lOffest, vec2(0.325, -0.135) + lOffest, 0.01, 0.068) * 0.8;
+
+  float rwt = smoothstep(0.0, -0.01, rw);
+  rwt = mix( 0.0, rwt, smoothstep(0.0, -0.05, word));
+  rwt += smoothstep(0.0, -0.05, word) * 0.15;
+  // rwt += smoothstep(0.0, -0.03, rw);
+
+  light += vec3(1.,1.,1.) * pow(rwt, 0.9) * 2.;
+
 
   // color = map * 0.3 + color * .8;
   
-  
+  // color = boxColor;
+  pixelColor = mix(vec3(0.1), pixelColor, pow(bt,0.01));
 
-  gl_FragColor = vec4(color * pixelColor, 1.0);
+  color *= 1.0 + rand(vUv * 100.) * 0.3;
+
+  gl_FragColor = vec4(color * pixelColor * 1.0 + light * pixelColor * 8., 1.0);
 
   #include <tonemapping_fragment>
 	#include <colorspace_fragment>

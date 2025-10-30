@@ -11,17 +11,28 @@ import { Pane } from 'tweakpane'
 // __gui__
 const config = {
 	subdivision: 1,
+	lightAngle: (Math.PI * 3) / 4,
 }
 const pane = new Pane()
 
 pane
 	.addBinding(config, 'subdivision', {
 		min: 1,
-		max: 100,
+		max: 200,
 		step: 1,
 	})
 	.on('change', (ev) => {
 		groundMaterial.uniforms.uSubdivision.value = ev.value
+	})
+
+pane
+	.addBinding(config, 'lightAngle', {
+		min: -Math.PI * 2,
+		max: Math.PI * 2,
+		step: 0.01,
+	})
+	.on('change', (ev) => {
+		groundMaterial.uniforms.uLightAngle.value = ev.value
 	})
 
 /**
@@ -36,6 +47,8 @@ const scene = new THREE.Scene()
  */
 const textureLoader = new THREE.TextureLoader()
 const legoTexture = textureLoader.load('/lego-1x1.jpeg')
+const avatarTexture = textureLoader.load('/lego-avatar.png')
+avatarTexture.colorSpace = THREE.SRGBColorSpace
 
 /**
  * Plane
@@ -44,8 +57,10 @@ const groundMaterial = new THREE.ShaderMaterial({
 	vertexShader,
 	fragmentShader,
 	uniforms: {
-		uLegoTexture: { value: legoTexture },
-		uSubdivision: { value: 1.0 },
+		uLegoTexture: new THREE.Uniform(legoTexture),
+		uAvatarTexture: new THREE.Uniform(avatarTexture),
+		uSubdivision: new THREE.Uniform(config.subdivision),
+		uLightAngle: new THREE.Uniform(config.lightAngle),
 	},
 })
 const groundGeometry = new THREE.PlaneGeometry(10, 10)

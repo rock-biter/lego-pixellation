@@ -18,7 +18,7 @@ const config = {
 	subdivision: 20,
 	lightAngle: (Math.PI * 3) / 4,
 	trail: {
-		size: 0.1,
+		size: 0.15,
 	},
 }
 const pane = new Pane()
@@ -135,8 +135,8 @@ function createRenderTarget(mipmap = false, w = sizes.width, h = sizes.height) {
 }
 
 const trailRes = {
-	width: 1200,
-	height: 1200,
+	width: 200,
+	height: 200,
 }
 
 const rt1 = createRenderTarget(false, trailRes.width, trailRes.height)
@@ -177,6 +177,7 @@ const trailMaterial = new THREE.ShaderMaterial({
 		uSpeed: new THREE.Uniform(0),
 		uTime: globalUniforms.uTime,
 		uSize: new THREE.Uniform(config.trail.size),
+		uPointerSpeed: new THREE.Uniform(new THREE.Vector2(0)),
 	},
 })
 
@@ -236,6 +237,13 @@ function tic() {
 	const intersects = raycaster.intersectObject(ground)
 	if (intersects.length > 0) {
 		const uv = intersects[0].uv
+
+		const prevUV = trailMaterial.uniforms.uUVPointer.value.clone()
+		trailMaterial.uniforms.uPointerSpeed.value.lerp(
+			trailMaterial.uniforms.uUVPointer.value.clone().sub(prevUV),
+			dt * 4
+		)
+
 		trailMaterial.uniforms.uUVPointer.value.lerp(uv, dt * 10)
 	}
 

@@ -212,7 +212,7 @@ void main() {
 
   color *= 1.0 + rand(vUv * 100.) * 0.3;
   float luminance = dot(pixelColor, vec3(0.299, 0.587, 0.114));
-  vec3 c = vec3(.3,0.5,1.);
+  vec3 c = vec3(0.01);
   pixelColor = mix(pixelColor, vec3(luminance * c * 3.), trail.r);
 
   gl_FragColor = vec4(color * pixelColor * 1.0 + light * pixelColor * 8., 1.0);

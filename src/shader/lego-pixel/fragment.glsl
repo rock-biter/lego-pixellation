@@ -2,6 +2,7 @@
 varying vec2 vUv;
 uniform sampler2D uLegoTexture;
 uniform sampler2D uAvatarTexture;
+uniform sampler2D uTrailTexture;
 uniform float uSubdivision;
 uniform float uLightAngle;
 
@@ -139,6 +140,7 @@ void main() {
 
   vec2 uvMap = floor(vUv * uSubdivision ) / uSubdivision + 0.1 / uSubdivision;
   vec3 pixelColor = texture2D(uAvatarTexture, uvMap).rgb;
+  vec3 trail = texture2D(uTrailTexture, uvMap).rgb;
   vec2 uv = fract(vUv * uSubdivision) * 2.0 - 1.0;
   vec3 color = vec3(1.0, 1.0, 1.0);
 
@@ -209,8 +211,13 @@ void main() {
   pixelColor = mix(vec3(0.1), pixelColor, pow(bt,0.01));
 
   color *= 1.0 + rand(vUv * 100.) * 0.3;
+  float luminance = dot(pixelColor, vec3(0.299, 0.587, 0.114));
+  vec3 c = vec3(.3,0.5,1.);
+  pixelColor = mix(pixelColor, vec3(luminance * c * 3.), trail.r);
 
   gl_FragColor = vec4(color * pixelColor * 1.0 + light * pixelColor * 8., 1.0);
+
+  // gl_FragColor.rgb = trail;
 
   #include <tonemapping_fragment>
 	#include <colorspace_fragment>

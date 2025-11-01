@@ -70,7 +70,9 @@ const scene = new THREE.Scene()
 const textureLoader = new THREE.TextureLoader()
 const legoTexture = textureLoader.load('/lego-1x1.jpeg')
 const avatarTexture = textureLoader.load('/lego-avatar.png')
+const originalAvatarTexture = textureLoader.load('/original-avatar.png')
 avatarTexture.colorSpace = THREE.SRGBColorSpace
+originalAvatarTexture.colorSpace = THREE.SRGBColorSpace
 
 /**
  * Plane
@@ -81,9 +83,11 @@ const groundMaterial = new THREE.ShaderMaterial({
 	uniforms: {
 		uLegoTexture: new THREE.Uniform(legoTexture),
 		uAvatarTexture: new THREE.Uniform(avatarTexture),
+		uOriginalAvatarTexture: new THREE.Uniform(originalAvatarTexture),
 		uSubdivision: new THREE.Uniform(config.subdivision),
 		uLightAngle: new THREE.Uniform(config.lightAngle),
 		uTrailTexture: new THREE.Uniform(null),
+		uTime: globalUniforms.uTime,
 	},
 })
 const groundGeometry = new THREE.PlaneGeometry(10, 10)

@@ -156,19 +156,32 @@ void main() {
   vec3 light = vec3(0);
 
   float boxRadius = 0.07;
-  if(trail.r > 0.5 || n > 0.5 || n < -0.5) {
-    boxRadius = 0.995;
-  }
-  
-  // square
+
   float tBox = sdgBox(uv, vec2(1. - boxRadius)).x;
   float bt = smoothstep(0.0, -0.05, tBox - boxRadius);
+
   vec3 boxColor = mix(vec3(0.2), color, pow(bt,0.5));
   color = boxColor;
 
   float rtb = smoothstep(0.0, -0.07, tBox - boxRadius);
   rtb *= smoothstep(-0.3, 0., sdgBox(uv - lightDirection * 0.03, vec2(1.1)).x - 0.07);
   light += vec3(1.,1.,1.) * pow(abs(rtb), 3.) * 5.;
+
+  if(trail.r > 0.5 || n > 0.5 || n < -0.5) {
+    boxRadius = 0.995;
+    // pin
+    float tCircle = sdgCircle(uv, 0.99).x;
+    float ct = smoothstep(0.0, 0.02, tCircle);
+    ct += smoothstep(0.0, -0.05, tCircle);
+    vec3 circleColor = mix(vec3(0.3), color, pow(ct,0.5));
+    color = min(color, circleColor);
+
+    // riflessi pin
+    float rtc = smoothstep(0.0, -0.05, tCircle);
+    rtc *= smoothstep(-0.3, 0., sdgCircle(uv - lightDirection * 0.08, 1.17).x);
+    light += vec3(1.,1.,1.) * pow(rtc, 2.) * 1.;
+  }  
+  
   // pixelColor *= clamp(0.0,1.0,1. - (tBox - 0.07));
 
   if(n > 0. && trail.r < 0.3) {

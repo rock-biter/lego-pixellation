@@ -73,6 +73,8 @@ const avatarTexture = textureLoader.load('/lego-avatar.png')
 const originalAvatarTexture = textureLoader.load('/original-avatar.png')
 avatarTexture.colorSpace = THREE.SRGBColorSpace
 originalAvatarTexture.colorSpace = THREE.SRGBColorSpace
+avatarTexture.minFilter = THREE.NearestFilter
+originalAvatarTexture.minFilter = THREE.NearestFilter
 
 /**
  * Plane

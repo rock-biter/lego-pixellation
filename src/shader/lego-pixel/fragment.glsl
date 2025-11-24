@@ -145,6 +145,9 @@ void main() {
   vec2 uvOffset = vec2(pixelSizeX, pixelSizeY);
 
   vec2 uvMap = floor(vUv * uSubdivision ) / uSubdivision + 0.1 / uSubdivision;
+
+  vec2 deb = fwidth(uvMap);
+
   vec3 pixelColor = texture2D(uAvatarTexture, uvMap).rgb;
   vec3 originalAvatar = texture2D(uOriginalAvatarTexture, uvMap).rgb;
   vec3 trail = texture2D(uTrailTexture, uvMap).rgb;
@@ -236,7 +239,7 @@ void main() {
 
   gl_FragColor = vec4(color * pixelColor * 1.0 + light * pixelColor * 8., 1.0);
 
-  // gl_FragColor.rgb = trail;
+  gl_FragColor.rgb = mix(gl_FragColor.rgb, vec3(0.0), max(deb.x, deb.y) * 3. );
 
   #include <tonemapping_fragment>
 	#include <colorspace_fragment>
